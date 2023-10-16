@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app-deployment
+  labels:
+    app: web-app
+spec:
+  replicas: 4 # 4 пода для обработки пиковой нагрузки
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: web-app-container
+        image: your-web-app-image:latest
+        resources:
+          requests:
+            memory: "128Mi" # Запросы памяти всегда 128MB
+            cpu: "2" # Запросы CPU для начальной инициализации
+          limits:
+            memory: "128Mi"
+            cpu: "2" # Лимиты CPU для начальной инициализации
+        livenessProbe:
+          httpGet:
+            path: /healthz # Путь для проверки живучести
+            port: 80
+          initialDelaySeconds: 60 # Задержка перед началом проверок живучести
+          periodSeconds: 10 # Периодичность проверок
+        readinessProbe:
+          httpGet:
+            path: /readiness # Путь для проверки готовности
+            port: 80
+          initialDelaySeconds: 10 # Задержка перед началом проверок готовности
+          periodSeconds: 5 # Периодичность проверок готовности
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 30"] # Задержка перед остановкой контейнера
